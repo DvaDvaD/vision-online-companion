@@ -1,0 +1,5 @@
+{
+    "database": {
+        "dsn": "postgres://postgres:postgres@localhost:5432/mydb?sslmode=disable"
+    }
+}

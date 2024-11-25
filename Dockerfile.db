@@ -1,0 +1,18 @@
+# Dockerfile.db
+
+FROM postgres:latest
+
+# Set environment variables for PostgreSQL
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_DB=keyonthego
+
+RUN mkdir -p /tmp/psql_data/
+
+# Copy migration and seeding scripts into the container
+COPY database/migrations /tmp/psql_data/migrations
+COPY database/sql/seed /tmp/psql_data/seed
+
+# Custom entrypoint script to run migrations and seeding
+COPY db-init.sh /docker-entrypoint-initdb.d/db-init.sh
+RUN chmod +x /docker-entrypoint-initdb.d/db-init.sh

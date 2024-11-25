@@ -1,0 +1,75 @@
+components:
+  schemas:
+    Response:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success" # Generic status example
+        message:
+          type: string
+          example: "Operation completed successfully" # Default message
+        data:
+          type: object
+          nullable: true
+          description: Response payload that varies based on the endpoint
+
+    Response200:
+      allOf:
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            status:
+              example: "success"
+            message:
+              example: "Operation completed successfully"
+
+    Response201:
+      allOf:
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            status:
+              example: "success"
+            message:
+              example: "Your request has been fulfilled"
+
+    Response400:
+      allOf:
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            status:
+              example: "error"
+            message:
+              example: "Your request is invalid"
+
+    Response401:
+      allOf:
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            status:
+              example: "error"
+            message:
+              example: "Please login before accessing this resource"
+
+    Response403:
+      allOf:
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            status:
+              example: "error"
+            message:
+              example: "You are not authorized access"
+
+    Response404:
+      allOf:
+        - $ref: '#/components/schemas/Response'
+        - type: object
+          properties:
+            status:
+              example: "error"
+            message:
+              example: "Your requested resource was not found"

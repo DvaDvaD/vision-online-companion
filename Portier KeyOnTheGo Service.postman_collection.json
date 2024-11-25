@@ -1,0 +1,230 @@
+{
+	"info": {
+		"_postman_id": "8930d794-affb-4a1f-b0cf-9447374307a2",
+		"name": "Portier KeyOnTheGo Service",
+		"description": "Collection for testing the Portier KeyOnTheGo Service API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34872889"
+	},
+	"item": [
+		{
+			"name": "From Mobile",
+			"item": [
+				{
+					"name": "List sign requests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/key-otg/sign",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"key-otg",
+								"sign"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sign the request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sign\": \"base64_of_signing\",\n  \"location_latitude\": 52.5200,\n  \"location_longitude\": 13.4050\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/key-otg/sign/{{requestId}}?token={{token}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"key-otg",
+								"sign",
+								"{{requestId}}"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "From Desktop",
+			"item": [
+				{
+					"name": "Create a new signing request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const responseJson = pm.response.json()\r",
+									"var requestId = responseJson.request_id\r",
+									"var token = responseJson.token\r",
+									"pm.environment.set(\"requestId\", requestId)\r",
+									"pm.environment.set(\"token\", token)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Portier-Agent",
+								"value": "portier/Vision (Windows 11; v5.0.1)"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"request_user\": \"START\",\n  \"holder_id\": \"P1063\",\n  \"holder_name\": \"Herr Ackermann, Vera\",\n  \"notes\": \"Another notes to show to holder\",\n  \"issue\": [\n    {\n      \"number\": \"1002\",\n      \"copy\": 1,\n      \"description\": \"\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/key-otg/sign",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"key-otg",
+								"sign"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get QR code for request",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Portier-Agent",
+								"value": "portier/Vision (Windows 11; v5.0.1)"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/key-otg/sign/{{requestId}}/qr?token={{token}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"key-otg",
+								"sign",
+								"{{requestId}}",
+								"qr"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Common Endpoints",
+			"item": [
+				{
+					"name": "Get signed request",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Portier-Agent",
+								"value": "portier/Vision (Windows 11; v5.0.1)"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/key-otg/sign/{{requestId}}?token={{token}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"key-otg",
+								"sign",
+								"{{requestId}}"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "{{token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Server Control",
+			"item": [
+				{
+					"name": "Shutdown server",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shutdown",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shutdown"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "username",
+				"value": "{{accountId}}",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "{{m2mToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:1233",
+			"type": "string"
+		}
+	]
+}

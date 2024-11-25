@@ -1,0 +1,382 @@
+openapi: "3.0.3"
+info:
+  title: portier KeyOnTheGo Service
+  description: "Add basic auth for authorization when using cloud server. Use Account Id and M2M token for username and password respectively."
+  version: "1.0"
+servers:
+  - url: http://localhost:1233
+
+paths:
+  /key-otg/sign:
+    post:
+      tags:
+        - From Desktop
+      summary: Create a new signing request
+      description: "Create a new signing request from desktop app. We need to check whether this account id has active plan and send request information for better visibility."
+      parameters:
+        - $ref: "#/components/parameters/XPortierAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSignRequest"
+      responses:
+        "200":
+          description: Share request id and token for future request. Or just share the dsn (and use it) to check (GET) or sign (POST).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSignResponse"
+
+  /key-otg/sign/{requestID}/qr:
+    get:
+      tags:
+        - From Desktop
+      summary: Get QR code for this request
+      parameters:
+        - $ref: "#/components/parameters/XPortierAgent"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Token"
+      responses:
+        "200":
+          description: "Get QR code for debugging purpose"
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+
+  /key-otg/sign/{requestID}:
+    get:
+      tags:
+        - From Desktop
+        - From Mobile
+      summary: Get signed request
+      description: ""
+      parameters:
+        - $ref: "#/components/parameters/XPortierAgent"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Token"
+      responses:
+        "200":
+          description: This endpoint is used by mobile app (to show request information) and desktop app (need to check current status).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SignResponse"
+                  - $ref: "#/components/schemas/CreateSignRequest"
+    post:
+      tags:
+        - From Mobile
+      summary: Sign the request
+      description: "Sending a sign image and encode it"
+      parameters:
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignSubmitRequest"
+      responses:
+        "200":
+          description: Signing submitted successfully.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SignResponse"
+
+  # Authenticated Endpoints
+  /auth/key-otg/sign:
+    get:
+      tags:
+        - From Mobile (Authenticated)
+      summary: List sign requests
+      description: "List sign requests for this account id."
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: "List sign requests for this account id."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SignResponse"
+  /auth/key-otg/sign/{requestID}:
+    get:
+      tags:
+        - From Desktop (Authenticated)
+        - From Mobile (Authenticated)
+      summary: Get signed request using requestID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RequestID" # Reference to RequestID parameter here
+      responses:
+        "200":
+          description: "This endpoint is used by mobile app (to show request information) and desktop app (need to check current status)."
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SignResponse"
+                  - $ref: "#/components/schemas/CreateSignRequest"
+
+  /auth/key-otg/sign/submit/{requestID}:
+    post:
+      tags:
+        - From Mobile (Authenticated)
+      summary: Sign the request using requestID
+      description: "Sending a sign image and encode it using requestID"
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RequestID" # Reference to RequestID parameter here
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignSubmitRequest"
+      responses:
+        "200":
+          description: "Signing submitted successfully."
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SignResponse"
+
+  /auth/key-otg/sign/create:
+    post:
+      tags:
+        - From Desktop (Authenticated)
+      summary: Create a new signing request using requestID
+      description: "Create a new signing request from desktop app using requestID."
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XPortierAgent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSignRequest"
+      responses:
+        "200":
+          description: "Share request id and token for future request."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSignResponse"
+
+  /shutdown:
+    post:
+      tags:
+        - Server Control
+      summary: Shutdown the server
+      description: Initiates a graceful shutdown of the server. Only work in local execution.
+      security:
+        - basicAuth: []
+      responses:
+        "200":
+          description: Server shutdown initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Server shutting down..."
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    XPortierAgent:
+      name: X-Portier-Agent
+      in: header
+      required: true
+      schema:
+        type: string
+        example: "portier/Vision (Windows 11; v5.0.1)"
+    RequestID:
+      name: requestID
+      in: path
+      required: true
+      description: ID of the signing request.
+      schema:
+        type: string
+        example: "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    Token:
+      name: token
+      in: query
+      required: true
+      description: Token to get access for this request
+      schema:
+        type: string
+        example: qwertyuiop12345
+
+  schemas:
+    Issue:
+      type: object
+      properties:
+        number:
+          type: string
+          example: "1002"
+        copy:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: ""
+      required:
+        - number
+        - copy
+
+    NetworkInterface:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "eth0"
+        ip:
+          type: string
+          example: "192.168.1.100"
+        dsn:
+          type: string
+          example: "http://192.168.1.100:65535/key-otg/sign/01ARZ3NDEKTSV4RRFFQ69G5FAV?token=qwertyuiop12345"
+
+    Status:
+      type: string
+      enum:
+        - pending
+        - expired
+        - failed
+        - success
+      example: "pending"
+
+    CreateSignRequest:
+      type: object
+      properties:
+        request_user:
+          type: string
+          example: "START"
+        holder_id:
+          type: string
+          example: "P1063"
+        holder_name:
+          type: string
+          example: "Herr Ackermann, Vera"
+        notes:
+          type: string
+          example: "Another notes to show to holder"
+        issue:
+          type: array
+          items:
+            $ref: "#/components/schemas/Issue"
+      required:
+        - request_user
+        - holder_id
+        - holder_name
+        - issue
+
+    CreateSignResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+          example: "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+        token:
+          type: string
+          example: "qwertyuiop12345"
+        interfaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/NetworkInterface"
+
+    SignSubmitRequest:
+      type: object
+      properties:
+        sign:
+          type: string
+          description: Base64 encoded signing data.
+          example: "base64_of_signing"
+        location_latitude:
+          type: number
+          example: 52.5200
+        location_longitude:
+          type: number
+          example: 13.4050
+      required:
+        - sign
+
+    SignResponse:
+      type: object
+      properties:
+        request_user:
+          type: string
+          example: "START"
+        request_id:
+          type: string
+          example: "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+        status:
+          $ref: "#/components/schemas/Status"
+        signed_at:
+          type: string
+          format: date-time
+          example: "2022-01-01T12:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2022-01-01T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2022-01-01T12:00:00Z"
+        holder_id:
+          type: string
+          example: "P1063"
+        holder_name:
+          type: string
+          example: "Herr Ackermann, Vera"
+        notes:
+          type: string
+          example: "Another notes to show to holder"
+        issue:
+          type: array
+          items:
+            $ref: "#/components/schemas/Issue"
+        location_latitude:
+          type: number
+          example: 52.5200
+        location_longitude:
+          type: number
+          example: 13.4050
+        sign:
+          type: string
+          description: Base64 encoded signing data.
+          example: "base64_of_signing"
+      required:
+        - request_user
+        - holder_id
+        - holder_name
+        - issue
+      # Didn't use allOf because oapi-codegen can't seem to generate properties referenced using allOf.
+      # Will temporarily manually list all the properties.
+      # allOf:
+      #   - $ref: '#/components/schemas/CreateSignRequest'
+      #   - $ref: '#/components/schemas/SignSubmitRequest'
